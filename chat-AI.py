@@ -3,14 +3,21 @@ import streamlit as st
 from langchain.document_loaders import PyPDFLoader, UnstructuredFileLoader
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain.vectorstores import FAISS
+
 from langchain.embeddings import OpenAIEmbeddings
+embeddings = OpenAIEmbeddings(
+    openai_api_key=st.secrets["openai_api_key"],
+    openai_api_base="https://openrouter.ai/api/v1"
+)
+
 from langchain.chat_models import ChatOpenAI
 llm = ChatOpenAI(
     temperature=0.1,
     openai_api_key=st.secrets["openai_api_key"],
     openai_api_base="https://openrouter.ai/api/v1",
-    model_name="mistralai/mixtral-8x7b-instruct"
+    model_name="meta-llama/llama-4-maverick:free"
 )
+
 from langchain.chains.question_answering import load_qa_chain
 
 # Load API key
