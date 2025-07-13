@@ -1,28 +1,25 @@
 import os
 import streamlit as st
 import tempfile
-
 from pathlib import Path
-from langchain.docstore.document import Document
 
-from langchain_community.document_loaders import PyPDFLoader, UnstructuredFileLoader
+from langchain.document_loaders import PyPDFLoader, UnstructuredFileLoader
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain.vectorstores import FAISS
-from langchain.embeddings import HuggingFaceEmbeddings
+from langchain.docstore.document import Document
+
+from langchain.embeddings import OpenAIEmbeddings
 from langchain.chat_models import ChatOpenAI
 from langchain.chains.question_answering import load_qa_chain
 
-
-
-# 🚀 Tiêu đề giao diện
-st.title("📄 Chatbot từ tài liệu GitHub – dùng OpenRouter")
-
-# ✅ Khởi tạo mô hình nhúng văn bản (không dùng API)
-embedding_model = HuggingFaceEmbeddings(
-    model_name="sentence-transformers/all-MiniLM-L6-v2"
+# Cấu hình embedding model (qua OpenRouter)
+embedding_model = OpenAIEmbeddings(
+    openai_api_key=st.secrets["openai_api_key"],
+    openai_api_base="https://openrouter.ai/api/v1",
+    model="openai/text-embedding-ada-002"
 )
 
-# ✅ Khởi tạo mô hình LLM từ OpenRouter
+# Cấu hình mô hình trả lời (LLM)
 llm = ChatOpenAI(
     temperature=0.1,
     openai_api_key=st.secrets["openai_api_key"],
@@ -30,8 +27,18 @@ llm = ChatOpenAI(
     model_name="mistralai/mistral-7b-instruct:free"
 )
 
-# ✅ Nạp và xử lý tài liệu
-@st.cache_resource
+# Giao diện chính
+st.title("📄 Chatbot từ tài liệu của bạn")
+
+uploaded_files = st.file_uploader(
+    "📂 Tải lên tài liệu (PDF, DOCX, TXT)", 
+    type=["pdf", "docx", "txt"], 
+    accept_multiple_files=True
+)
+
+lang = st.selectbox("🌐 Chọn ngôn ngữ trả lời", ["Tiếng Việt", "English"])
+
+# Hàm xử lý tài liệu upload
 def load_uploaded_db(uploaded_files):
     docs = []
 
@@ -52,22 +59,17 @@ def load_uploaded_db(uploaded_files):
 
     return FAISS.from_documents(splits, embedding_model)
 
-
-# ✅ Giao diện đặt câu hỏi
-st.title("📄 Chatbot từ tài liệu của bạn")
-
-uploaded_files = st.file_uploader(
-    "📂 Tải lên tài liệu của bạn (PDF, DOCX, TXT)",
-    type=["pdf", "docx", "txt"],
-    accept_multiple_files=True
-)
-
+# Khi người dùng upload
 if uploaded_files:
     db = load_uploaded_db(uploaded_files)
 
     query = st.text_input("🤖 Câu hỏi của bạn:")
+
     if query:
+        prefix = "Trả lời bằng tiếng Việt. " if lang == "Tiếng Việt" else ""
+        full_query = prefix + query
+
         docs = db.similarity_search(query, k=3)
         chain = load_qa_chain(llm, chain_type="stuff")
-        answer = chain.run(input_documents=docs, question=query)
+        answer = chain.run(input_documents=docs, question=full_query)
         st.success(answer)
