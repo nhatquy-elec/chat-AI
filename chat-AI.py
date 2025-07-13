@@ -34,7 +34,7 @@ def load_db():
 
 db = load_db()
 
-query = st.text_input("🧠 Câu hỏi của bạn:")
+query = st.text_input("?_ Câu hỏi của bạn:")
 if query:
     docs = db.similarity_search(query, k=3)
     chain = load_qa_chain(OpenAI(temperature=0), chain_type="stuff")
