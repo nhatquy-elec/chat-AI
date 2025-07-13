@@ -1,6 +1,8 @@
+streamlit
 langchain
 openai
-streamlit
-faiss-cpu
 tiktoken
-gitpython
+faiss-cpu
+sentence-transformers
+python-docx
+unstructured
