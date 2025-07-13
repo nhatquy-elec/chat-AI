@@ -1,5 +1,9 @@
 import os
 import streamlit as st
+import tempfile
+
+from pathlib import Path
+from langchain.docstore.document import Document
 
 from langchain_community.document_loaders import PyPDFLoader, UnstructuredFileLoader
 from langchain.text_splitter import RecursiveCharacterTextSplitter
@@ -8,8 +12,6 @@ from langchain.embeddings import HuggingFaceEmbeddings
 from langchain.chat_models import ChatOpenAI
 from langchain.chains.question_answering import load_qa_chain
 
-from langchain.docstore.document import Document
-import tempfile
 
 
 # 🚀 Tiêu đề giao diện
@@ -51,12 +53,21 @@ def load_uploaded_db(uploaded_files):
     return FAISS.from_documents(splits, embedding_model)
 
 
-db = load_uploaded_db()
-
 # ✅ Giao diện đặt câu hỏi
-query = st.text_input("❓ Câu hỏi của bạn:")
-if query:
-    docs = db.similarity_search(query, k=3)
-    chain = load_qa_chain(llm, chain_type="stuff")
-    answer = chain.run(input_documents=docs, question=query)
-    st.success(answer)
+st.title("📄 Chatbot từ tài liệu của bạn")
+
+uploaded_files = st.file_uploader(
+    "📂 Tải lên tài liệu của bạn (PDF, DOCX, TXT)",
+    type=["pdf", "docx", "txt"],
+    accept_multiple_files=True
+)
+
+if uploaded_files:
+    db = load_uploaded_db(uploaded_files)
+
+    query = st.text_input("🤖 Câu hỏi của bạn:")
+    if query:
+        docs = db.similarity_search(query, k=3)
+        chain = load_qa_chain(llm, chain_type="stuff")
+        answer = chain.run(input_documents=docs, question=query)
+        st.success(answer)
