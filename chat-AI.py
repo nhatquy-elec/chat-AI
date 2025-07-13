@@ -21,7 +21,7 @@ llm = ChatOpenAI(
     temperature=0.1,
     openai_api_key=st.secrets["openai_api_key"],
     openai_api_base="https://openrouter.ai/api/v1",
-    model_name="openchat/openchat-3.5-1210"
+    model_name="mistralai/mistral-7b-instruct:free"
 )
 
 # ✅ Nạp và xử lý tài liệu
