@@ -5,10 +5,15 @@ from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain.vectorstores import FAISS
 
 from langchain.embeddings import OpenAIEmbeddings
+
 embeddings = OpenAIEmbeddings(
     openai_api_key=st.secrets["openai_api_key"],
-    openai_api_base="https://openrouter.ai/api/v1"
+    openai_api_base="https://openrouter.ai/api/v1",
+    model="openai/text-embedding-ada-002"  # model embed tương thích
 )
+
+db = FAISS.from_documents(splits, embeddings)
+
 
 from langchain.chat_models import ChatOpenAI
 llm = ChatOpenAI(
