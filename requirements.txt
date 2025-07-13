@@ -1,9 +1,6 @@
-streamlit
-openai
 langchain
-langchain-community
+openai
+streamlit
 faiss-cpu
-pypdf
-unstructured[all]
-python-docx
 tiktoken
+gitpython
