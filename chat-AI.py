@@ -8,6 +8,10 @@ from langchain.embeddings import HuggingFaceEmbeddings
 from langchain.chat_models import ChatOpenAI
 from langchain.chains.question_answering import load_qa_chain
 
+from langchain.docstore.document import Document
+import tempfile
+
+
 # 🚀 Tiêu đề giao diện
 st.title("📄 Chatbot từ tài liệu GitHub – dùng OpenRouter")
 
@@ -26,20 +30,28 @@ llm = ChatOpenAI(
 
 # ✅ Nạp và xử lý tài liệu
 @st.cache_resource
-def load_db():
+def load_uploaded_db(uploaded_files):
     docs = []
-    for filename in os.listdir("data"):
-        path = os.path.join("data", filename)
-        if filename.endswith(".pdf"):
-            docs += PyPDFLoader(path).load()
-        elif filename.endswith(".docx") or filename.endswith(".txt"):
-            docs += UnstructuredFileLoader(path).load()
+
+    for uploaded_file in uploaded_files:
+        suffix = Path(uploaded_file.name).suffix
+
+        with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as tmp_file:
+            tmp_file.write(uploaded_file.read())
+            tmp_path = tmp_file.name
+
+        if uploaded_file.name.endswith(".pdf"):
+            docs += PyPDFLoader(tmp_path).load()
+        elif uploaded_file.name.endswith(".docx") or uploaded_file.name.endswith(".txt"):
+            docs += UnstructuredFileLoader(tmp_path).load()
+
     splitter = RecursiveCharacterTextSplitter(chunk_size=500, chunk_overlap=50)
     splits = splitter.split_documents(docs)
-    db = FAISS.from_documents(splits, embedding_model)
-    return db
 
-db = load_db()
+    return FAISS.from_documents(splits, embedding_model)
+
+
+db = load_uploaded_db()
 
 # ✅ Giao diện đặt câu hỏi
 query = st.text_input("❓ Câu hỏi của bạn:")
