@@ -3,5 +3,5 @@ openai
 langchain
 faiss-cpu
 pypdf
-unstructured
+unstructured[all]
 python-docx
