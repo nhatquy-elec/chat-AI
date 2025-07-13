@@ -1,24 +1,22 @@
-from langchain.document_loaders import GitLoader
-from langchain.embeddings import OpenAIEmbeddings
+from langchain.document_loaders import TextLoader
 from langchain.vectorstores import FAISS
-from langchain.chains import RetrievalQA
+from langchain.embeddings import OpenAIEmbeddings
 from langchain.chat_models import ChatOpenAI
+from langchain.chains import RetrievalQA
+import os
 
-# Tải dữ liệu từ repo GitHub
-loader = GitLoader(repo_url='https://github.com/your-username/your-repo', branch='main')
-documents = loader.load()
+def load_documents(folder_path):
+    docs = []
+    for filename in os.listdir(folder_path):
+        if filename.endswith(".txt") or filename.endswith(".md"):
+            loader = TextLoader(os.path.join(folder_path, filename), encoding='utf-8')
+            docs.extend(loader.load())
+    return docs
 
-# Tạo embeddings và xây dựng bộ nhớ tìm kiếm
-db = FAISS.from_documents(documents, OpenAIEmbeddings())
-
-# Tạo chatbot với khả năng tìm kiếm dữ liệu
-retriever = db.as_retriever()
-qa_chain = RetrievalQA.from_chain_type(
-    llm=ChatOpenAI(),
-    retriever=retriever
-)
-
-# Hỏi chatbot
-question = "Nội dung chính của tài liệu là gì?"
-answer = qa_chain.run(question)
-print(answer)
+def build_qa_chain(docs):
+    embeddings = OpenAIEmbeddings()
+    vectorstore = FAISS.from_documents(docs, embeddings)
+    retriever = vectorstore.as_retriever()
+    llm = ChatOpenAI(temperature=0)
+    qa_chain = RetrievalQA.from_chain_type(llm=llm, retriever=retriever)
+    return qa_chain
